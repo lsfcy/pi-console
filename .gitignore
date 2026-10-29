@@ -1,0 +1,13 @@
+node_modules/
+build/
+dist/
+dist-*/
+artifacts/
+.sandbox/
+.DS_Store
+*.log
+.env
+.env.*
+*.pem
+*.key
+*.p12

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="608" height="32" viewBox="0 0 608 32">
+  <title>Pi Console native menu icons</title>
+  <defs>
+    <symbol id="open" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+    <symbol id="favorite" viewBox="0 0 24 24"><path d="m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.6-4.5 6.4-.9Z"/></symbol>
+    <symbol id="pinned" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5v3l-7-7h3l5-3 1-4ZM10 14l-6 6"/></symbol>
+    <symbol id="globalPinned" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 8h8l-2 4v3h-4v-3Zm4 7v4"/></symbol>
+    <symbol id="unread" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></symbol>
+    <symbol id="read" viewBox="0 0 24 24"><path d="M3 9v10h18V9M3 9l9-6 9 6-9 6-9-6m1 9 5-5m11 5-5-5"/></symbol>
+    <symbol id="rename" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14v6Z"/></symbol>
+    <symbol id="stats" viewBox="0 0 24 24"><path d="M4 4v16h16M8 15v-4m4 4V7m4 8v-6"/></symbol>
+    <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+    <symbol id="folder" viewBox="0 0 24 24"><path d="M3 8V6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+    <symbol id="terminal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 9 3 3-3 3m6 0h4"/></symbol>
+    <symbol id="up" viewBox="0 0 24 24"><path d="M12 20V4m-6 6 6-6 6 6"/></symbol>
+    <symbol id="down" viewBox="0 0 24 24"><path d="M12 4v16m-6-6 6 6 6-6"/></symbol>
+    <symbol id="hide" viewBox="0 0 24 24"><path d="m3 3 18 18M9 5a11 11 0 0 1 12 7 16 16 0 0 1-4 5M6 6a16 16 0 0 0-3 6c4 7 10 9 16 5M10 10a3 3 0 0 0 4 4"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+    <symbol id="temporary" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" stroke-dasharray="3 3"/><path d="m7 9 3 3-3 3m6 0h4"/></symbol>
+    <symbol id="fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M6 7v10m0-5h5a7 7 0 0 0 7-5"/></symbol>
+    <symbol id="copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+  </defs>
+  <g fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#open" x="0" width="32" height="32"/>
+    <use href="#favorite" x="32" width="32" height="32"/>
+    <use href="#pinned" x="64" width="32" height="32"/>
+    <use href="#globalPinned" x="96" width="32" height="32"/>
+    <use href="#unread" x="128" width="32" height="32"/>
+    <use href="#read" x="160" width="32" height="32"/>
+    <use href="#rename" x="192" width="32" height="32"/>
+    <use href="#stats" x="224" width="32" height="32"/>
+    <use href="#close" x="256" width="32" height="32"/>
+    <use href="#trash" x="288" width="32" height="32"/>
+    <use href="#folder" x="320" width="32" height="32"/>
+    <use href="#terminal" x="352" width="32" height="32"/>
+    <use href="#up" x="384" width="32" height="32"/>
+    <use href="#down" x="416" width="32" height="32"/>
+    <use href="#hide" x="448" width="32" height="32"/>
+    <use href="#plus" x="480" width="32" height="32"/>
+    <use href="#temporary" x="512" width="32" height="32"/>
+    <use href="#fork" x="544" width="32" height="32"/>
+    <use href="#copy" x="576" width="32" height="32"/>
+  </g>
+</svg>

@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "build",
+    "sourceMap": true
+  },
+  "include": [
+    "src/main/**/*.cts",
+    "src/host/**/*.cts",
+    "src/preload/**/*.cts",
+    "src/shared/**/*.ts",
+    "src/pi/*.cts"
+  ]
+}

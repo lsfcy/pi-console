@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a reproducible problem
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include session content, API keys, credentials, or screenshots with secrets.
+  - type: input
+    id: version
+    attributes:
+      label: Pi Console version
+      placeholder: 0.0.3
+    validations:
+      required: true
+  - type: input
+    id: pi
+    attributes:
+      label: Pi version
+      description: Output of pi --version
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS Apple Silicon
+        - Other (unsupported)
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour and logs
+      description: Remove secrets and personal paths first.
+    validations:
+      required: true
