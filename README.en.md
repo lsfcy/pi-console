@@ -49,7 +49,9 @@ Choose or add a project, then use its `+` button to start Pi or reopen a session
 | Open project in Terminal | `⌘T` |
 | Settings / shortcuts | `⌘,` / `⌘/` |
 
-Hold `⌘` to see navigation hints. Shortcuts can be changed in Settings. The app uses `⌘` plus arrow keys for navigation; ordinary text fields keep their native editing behavior.
+A skippable quick-start guide appears on first launch. Reopen it from Settings → Quick start; it shows your current shortcut bindings.
+
+Hold `⌘` for **0.5 seconds** to see navigation hints. Shortcuts can be changed in Settings. The app uses `⌘` plus arrow keys for navigation; ordinary text fields keep their native editing behavior.
 
 ## How it works and data
 

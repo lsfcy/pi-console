@@ -43,7 +43,7 @@ for (const [projectId, name, prompt, costMicro, daysAgo] of sessions) {
   fs.writeFileSync(path.join(agent, 'sessions', projectId + '-' + id + '.jsonl'), entries.map(item => JSON.stringify(item)).join('\n') + '\n');
 }
 fs.writeFileSync(path.join(data, 'projects.json'), JSON.stringify({ version: 1, selectedId: 'web', projects,
-  preferences: { sidebarTheme: 'dark', workspaceTheme: 'dark', historyLayout: 'cards', cardColumns: 3, confirmResume: false, completionNotice: false, completionSound: false } }));
+  preferences: { onboardingSeen: true, sidebarTheme: 'dark', workspaceTheme: 'dark', historyLayout: 'cards', cardColumns: 3, confirmResume: false, completionNotice: false, completionSound: false } }));
 
 Object.assign(process.env, { PI_GUI_TEST_MODE: '1', PI_GUI_DATA_DIR: data, PI_CODING_AGENT_DIR: agent,
   PI_CODING_AGENT_SESSION_DIR: path.join(agent, 'sessions'), PI_OFFLINE: '1', PI_TELEMETRY: '0', PI_SKIP_VERSION_CHECK: '1' });

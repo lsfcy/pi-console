@@ -14,7 +14,7 @@ Object.assign(process.env, { PI_GUI_DATA_DIR: gui, PI_CODING_AGENT_DIR: pi, PI_C
   PI_OFFLINE: '1', PI_TELEMETRY: '0', PI_SKIP_VERSION_CHECK: '1', ANTHROPIC_API_KEY: 'not-a-real-key' });
 fs.writeFileSync(path.join(gui, 'projects.json'), JSON.stringify({version:1,selectedId:'alpha',projects:[
   {id:'alpha',name:'Alpha 项目',path:realA,source:'manual'}, {id:'beta',name:'Beta 项目',path:realB,source:'manual'}],
-  preferences:{confirmResume:false,completionSound:false,completionNotice:false,sidebarTheme:'light',workspaceTheme:'light'}}));
+  preferences:{onboardingSeen:true,confirmResume:false,completionSound:false,completionNotice:false,sidebarTheme:'light',workspaceTheme:'light'}}));
 fs.writeFileSync(path.join(pi, 'settings.json'), JSON.stringify({defaultProvider:'anthropic',defaultModel:'claude-sonnet-4-6',quietStartup:true,packages:[],extensions:[],skills:[]}));
 function history(cwd, id, title, day) {
   const directory = path.join(pi, 'sessions', '--fixtures--'); fs.mkdirSync(directory, {recursive:true});

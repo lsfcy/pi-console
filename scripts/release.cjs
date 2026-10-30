@@ -43,7 +43,7 @@ function build(version) {
   if (capture('ps', ['-axo', 'command=']).split('\n').some(command => command.includes(files.application + '/'))) {
     throw new Error('目标安装包仍在运行；退出后重建，或递增 rc 版本，禁止覆盖运行中的应用。');
   }
-  for (const task of ['check', 'test:i18n', 'test:smoke', 'test:sidebar', 'test:settings', 'test:lifecycle', 'test:relay']) run('npm', ['run', task]);
+  for (const task of ['check', 'test:onboarding', 'test:i18n', 'test:smoke', 'test:sidebar', 'test:settings', 'test:lifecycle', 'test:relay']) run('npm', ['run', task]);
   run('npm', ['run', 'package'], { env: { ...process.env, PI_GUI_PACKAGE_OUT: files.output } });
   run('npm', ['run', 'test:packaged'], { env: { ...process.env, PI_GUI_PACKAGED_APP: files.application } });
   if (fs.existsSync(path.join(files.application, 'Contents/Resources/app/.git'))) throw new Error('安装包中不应包含 Git 数据。');

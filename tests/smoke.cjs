@@ -102,6 +102,9 @@ async function activate(id) { await js('document.querySelector(\'.tab-select[dat
   controller.window.webContents.on('console-message', event => { if (event.level === 'error') errors.push(event.message); });
   require('./ui-driver.cjs').driveConfirmations(controller, options => dialog.showMessageBox(controller.window, options));
   await until(() => js('window.piGuiReady === true && library.loading === false'), 'ready and indexed');
+  assert.equal(await js('onboardingOpen'), true, 'fresh profiles start with the guide');
+  await js('dismissOnboarding()');
+  await until(() => js('!document.getElementById("onboarding-dialog").open'), 'guide skipped');
   assert.equal(await js('typeof require'), 'undefined');
   assert.equal(controller.projects.snapshot().projects.length, 2);
   assert.equal(await js('sessionHistory.length'), 3);

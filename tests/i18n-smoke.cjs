@@ -32,7 +32,7 @@ for (const [name, prompt, daysAgo] of sessions) {
 }
 fs.writeFileSync(path.join(data, 'projects.json'), JSON.stringify({ version: 1, selectedId: 'web',
   projects: [{ id: 'web', name: 'acme-web', path: canonicalProject }],
-  preferences: { language: 'en-US', sidebarTheme: 'dark', workspaceTheme: 'dark', historyLayout: 'cards', cardColumns: 3,
+  preferences: { onboardingSeen: true, language: 'en-US', sidebarTheme: 'dark', workspaceTheme: 'dark', historyLayout: 'cards', cardColumns: 3,
     confirmResume: false, completionNotice: false, completionSound: false } }));
 Object.assign(process.env, { PI_GUI_TEST_MODE: '1', PI_GUI_DATA_DIR: data, PI_CODING_AGENT_DIR: agent,
   PI_CODING_AGENT_SESSION_DIR: path.join(agent, 'sessions'), PI_OFFLINE: '1', PI_TELEMETRY: '0', PI_SKIP_VERSION_CHECK: '1' });
@@ -72,6 +72,12 @@ async function until(check, label, timeout = 20000) {
   assert.deepEqual([...new Set(menuLabels.filter(label => /[\u4e00-\u9fff]/.test(label)))], [], '原生菜单仍有中文：' + menuLabels.join(' | '));
   console.log('ok menu');
   await chinese('project');
+  await js('__consoleTest.openOnboarding()');
+  for (let step = 0; step < 4; step++) {
+    await js('document.querySelector(\'[data-onboarding-step="' + step + '"]\').click()');
+    await delay(80); await chinese('quick-start-' + step);
+  }
+  await js('document.getElementById("onboarding-next").click()'); await delay(100);
   await js('__consoleTest.showRecent()'); await delay(350); await chinese('sessions');
   await js('__consoleTest.savePreferences({historyLayout:"list"})'); await delay(350);
   const overlap = await js('(() => { const card=document.querySelector(".history-card"); const actions=card.querySelector(".card-actions")?.getBoundingClientRect(); if (!actions) return false; return [...card.querySelectorAll(".history-meta, .history-action")].some(node => { const rect=node.getBoundingClientRect(); return !(actions.right<=rect.left || actions.left>=rect.right || actions.bottom<=rect.top || actions.top>=rect.bottom); }); })()');
@@ -85,8 +91,8 @@ async function until(check, label, timeout = 20000) {
   };
   await until(() => js('document.hasFocus()'), 'keyboard test window focused');
   await js('document.activeElement?.blur()');
-  nativeKey('keyDown', 'Meta'); await delay(650);
-  assert.equal(await js('document.getElementById("sidebar").classList.contains("command-nav")'), false, 'Command hints stay hidden before the full one-second hold');
+  nativeKey('keyDown', 'Meta'); await delay(200);
+  assert.equal(await js('document.getElementById("sidebar").classList.contains("command-nav")'), false, 'Command hints stay hidden before the half-second hold');
   await until(() => js('document.getElementById("sidebar").classList.contains("command-nav")'), 'holding Command reveals the TUI navigation layer', 2500);
   assert(await js('document.querySelector(".command-nav-hud") !== null'), 'the global navigation HUD is visible');
   nativeKey('keyUp', 'Meta'); await delay(80);
@@ -336,7 +342,7 @@ async function until(check, label, timeout = 20000) {
   assert.equal(await js('document.querySelector(".command-nav-hud")'), null, 'quick Command Right does not reveal hints');
   nativeKey('keyDown', 'Left', ['meta']); nativeKey('keyUp', 'Left', ['meta']);
   assert.equal(await js('document.querySelector(".command-nav-hud")'), null, 'quick Command Left does not reveal hints');
-  await until(() => js('__consoleTest.navHeld'), 'holding Command through navigation reveals hints after one second', 2500);
+  await until(() => js('__consoleTest.navHeld'), 'holding Command through navigation reveals hints after half a second', 2500);
   nativeKey('keyUp', 'Meta'); await delay(100);
   assert.equal(await js('document.querySelector(".command-nav-hud")'), null, 'release hides long-hold hints');
   await chinese('live navigation');

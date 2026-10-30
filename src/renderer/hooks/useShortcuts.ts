@@ -7,6 +7,7 @@ export function useShortcuts(app: WorkspaceController) {
   useEffect(() => {
     const dispatch = (name: string) => {
       if (app.recordingShortcut) return;
+      if (app.onboardingOpen) { if (name === 'close-tab') app.dismissOnboarding(); return; }
       if (name === 'settings') { if (!app.renameTarget) void app.openSettings(); return; }
       if (name === 'about') { app.aboutOpen = true; app.publish(); return; }
       if (name === 'copy') {

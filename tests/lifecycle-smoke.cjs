@@ -13,7 +13,7 @@ const extension = path.join(root, 'marker.ts');
 fs.writeFileSync(extension, `export default function(pi) { pi.registerCommand('lifecycle-marker', { description:'Offline lifecycle test', handler:async()=> { pi.sendMessage({customType:'lifecycle-marker',content:'LIFECYCLE_CONTENT',display:true}); pi.appendEntry('lifecycle-marker',{value:1}); } }); }`);
 fs.writeFileSync(path.join(pi, 'settings.json'), JSON.stringify({ defaultProvider: 'anthropic', defaultModel: 'claude-sonnet-4-6', quietStartup: true, packages: [], skills: [], extensions: [extension] }));
 fs.writeFileSync(path.join(pi, 'mcp.json'), JSON.stringify({ mcpServers: { lifecycle: { command: 'node', args: [path.join(__dirname, 'lifecycle-mcp.cjs')] } } }));
-fs.writeFileSync(path.join(gui, 'projects.json'), JSON.stringify({ version: 1, selectedId: 'p', projects: [{ id: 'p', name: 'Lifecycle', path: fs.realpathSync(project) }], preferences: { workspaceTheme: 'dark', sidebarTheme: 'dark', completionNotice: false, completionSound: false, confirmClose: false } }));
+fs.writeFileSync(path.join(gui, 'projects.json'), JSON.stringify({ version: 1, selectedId: 'p', projects: [{ id: 'p', name: 'Lifecycle', path: fs.realpathSync(project) }], preferences: { onboardingSeen: true, workspaceTheme: 'dark', sidebarTheme: 'dark', completionNotice: false, completionSound: false, confirmClose: false } }));
 let controller, response = 1, confirmations = 0;
 dialog.showMessageBox = async () => { confirmations++; return { response }; };
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));

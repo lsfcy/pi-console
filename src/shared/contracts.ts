@@ -12,7 +12,7 @@ export interface Project { id: string; name: string; path: string; source?: 'man
 export interface Preferences {
   sidebarTheme: Theme; workspaceTheme: Theme; historyLayout: 'cards' | 'list'; cardColumns: number; language: 'zh-CN' | 'en-US';
   confirmResume: boolean; confirmClose: boolean; completionSound: boolean; completionNotice: boolean; checkAppUpdates: boolean;
-  sidebarCollapsed: boolean; fontSize: number; sidebarWidth: number; shortcuts: ShortcutOverrides;
+  sidebarCollapsed: boolean; fontSize: number; sidebarWidth: number; shortcuts: ShortcutOverrides; onboardingSeen: boolean;
 }
 export interface SessionReference { projectId: string; sessionKey: string }
 export type SessionMarkKind = 'favorite' | 'pinned';

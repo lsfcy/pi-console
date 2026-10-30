@@ -24,8 +24,8 @@ export function useWindowEnvironment(app: WorkspaceController) {
       if (event.key !== 'Meta' || event.altKey || event.ctrlKey || event.shiftKey || event.repeat || hintTimer || app.navHeld) return;
       const target = event.target instanceof Element ? event.target : null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]') && !target.closest('.xterm')) return;
-      // Navigation is immediate; hints appear only after holding Command for a full second.
-      hintTimer = setTimeout(() => { hintTimer = undefined; app.setNavHeld(true); }, 1000);
+      // Navigation is immediate; reveal hints after a half-second Command hold.
+      hintTimer = setTimeout(() => { hintTimer = undefined; app.setNavHeld(true); }, 500);
     };
     const up = (event: KeyboardEvent) => { if (event.key === 'Meta' || !event.metaKey) { clearHint(); app.finishNav(); } };
     window.addEventListener('blur', blur); window.addEventListener('focus', focus);

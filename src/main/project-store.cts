@@ -149,6 +149,7 @@ class ProjectStore {
       completionNotice: saved.completionNotice !== false,
       checkAppUpdates: saved.checkAppUpdates !== false,
       sidebarCollapsed: saved.sidebarCollapsed === true,
+      onboardingSeen: saved.onboardingSeen === true,
       fontSize: Math.round(Math.max(10, Math.min(22, Number(saved.fontSize) || 13))),
       sidebarWidth: Math.round(Math.max(224, Math.min(440, Number(saved.sidebarWidth) || 280)))
     };
@@ -156,7 +157,7 @@ class ProjectStore {
 
   setPreferences(patch: Partial<Preferences>) {
     const keys = ['sidebarTheme', 'workspaceTheme', 'historyLayout', 'cardColumns', 'confirmResume', 'confirmClose',
-      'completionSound', 'completionNotice', 'checkAppUpdates', 'sidebarCollapsed', 'fontSize', 'sidebarWidth', 'language', 'shortcuts'];
+      'completionSound', 'completionNotice', 'checkAppUpdates', 'sidebarCollapsed', 'fontSize', 'sidebarWidth', 'language', 'shortcuts', 'onboardingSeen'];
     if (!patch || typeof patch !== 'object' || Object.keys(patch).some(key => !keys.includes(key))) throw new Error(t('无效的设置。'));
     const next = { ...this.preferences(), ...patch };
     next.shortcuts = shortcuts.validateOverrides(next.shortcuts);
@@ -165,7 +166,7 @@ class ProjectStore {
         !['cards', 'list'].includes(next.historyLayout) || !['zh-CN', 'en-US'].includes(next.language) || typeof next.confirmResume !== 'boolean' ||
         typeof next.confirmClose !== 'boolean' ||
         typeof next.completionSound !== 'boolean' || typeof next.completionNotice !== 'boolean' || typeof next.checkAppUpdates !== 'boolean' ||
-        typeof next.sidebarCollapsed !== 'boolean' ||
+        typeof next.sidebarCollapsed !== 'boolean' || typeof next.onboardingSeen !== 'boolean' ||
         !Number.isInteger(next.cardColumns) || next.cardColumns < 1 || next.cardColumns > 6 ||
         !Number.isInteger(next.fontSize) || next.fontSize < 10 || next.fontSize > 22 ||
         !Number.isInteger(next.sidebarWidth) || next.sidebarWidth < 224 || next.sidebarWidth > 440) throw new Error(t('设置值超出允许范围。'));

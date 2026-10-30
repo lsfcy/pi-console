@@ -13,7 +13,7 @@ export function SettingsPanel({ hidden }: { hidden: boolean }) {
   const app = useWorkspace();
   const select = (id: string) => { app.stopShortcutRecording(); app.settingsSection = id; app.publish(); const panel = document.getElementById('settings-panel'); if (panel) panel.scrollTop = 0; };
   return <section id="settings-panel" className="settings-panel" aria-label={t("设置")} hidden={hidden} onScroll={app.navigation.replace}>
-    <div className="settings-actions"><button id="close-settings" className="button button-quiet" type="button" onClick={app.leaveSettings}>{t("返回工作区")}</button></div>
+    <div className="settings-actions"><button id="open-onboarding" className="button button-quiet" type="button" onClick={app.openOnboarding}>{t("新手引导")}</button><button id="close-settings" className="button button-quiet" type="button" onClick={app.leaveSettings}>{t("返回工作区")}</button></div>
     <div className="settings-layout">
       <nav id="settings-nav" className="settings-nav" role="tablist" aria-label={t("设置分类")} aria-orientation="vertical" onKeyDown={event => {
         const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('[data-settings-section]')], index = buttons.indexOf(document.activeElement as HTMLButtonElement);

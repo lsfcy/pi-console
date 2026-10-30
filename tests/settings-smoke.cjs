@@ -14,7 +14,7 @@ Object.assign(process.env,{PI_GUI_DATA_DIR:gui,PI_CODING_AGENT_DIR:pi,PI_CODING_
 fs.writeFileSync(path.join(pi,'settings.json'),JSON.stringify({defaultProvider:'anthropic',defaultModel:'claude-sonnet-4-6',quietStartup:true,extensions:[],packages:[],skills:[]}));
 fs.writeFileSync(path.join(gui,'projects.json'),JSON.stringify({version:1,selectedId:'a',projects:[
   {id:'a',name:'Alpha',path:fs.realpathSync(a),source:'manual'}, {id:'b',name:'Beta',path:fs.realpathSync(b),source:'manual'}],
-  preferences:{confirmResume:false,completionSound:false,completionNotice:false,workspaceTheme:'light',sidebarTheme:'light'}}));
+  preferences:{onboardingSeen:true,confirmResume:false,completionSound:false,completionNotice:false,workspaceTheme:'light',sidebarTheme:'light'}}));
 dialog.showMessageBox=async()=>({response:1});
 const {startApp}=require('../build/main/app.cjs');
 let controller;

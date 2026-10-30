@@ -24,7 +24,8 @@
 - ⌘W 与标签 × 结束当前 Pi 进程；working/running/blocked 弹一次确认并把「结束进程」设为默认按钮，done/idle/error 直接结束。`WorkspaceState` 不再维护 backgroundTabs/backgroundOrder，也不存在“已关闭标签但仍在后台”的 UI 状态；退出时选择保留 Pi 由 detach + 下次启动 adopt 完成，与标签关闭无关。
 - ⌘K 命令面板由渲染器从项目、会话与命令派生，不持久化查询；⌘J/⇧⌘J 按等待输入 > 错误 > 未读完成 > 运行中排序，跨项目跳转。两者不新增 IPC 或配置文件。
 - 会话页是唯一会话入口：`statsVisible` 在列表与统计之间切换，`MonitorPanel` 以 embedded 模式复用；独立 monitor 路由、侧栏入口、⌘⇧M 与原生菜单项已删除。统计筛选（活动时间/运行状态/排序）与列表筛选互不串页，导航历史不再出现 monitor。
-- 应用导航只使用含 ⌘ 的组合：⌘↑/↓ 切换侧栏会话，⌘←/→ 切换标签，⌘1–9/0 切换可见项目。单独 Option、Ctrl 及其组合不被应用拦截，保留给 Pi 与文本输入，包括 Pi 的 Ctrl+] 字符跳转。长按 ⌘ 1000ms 显示当前配置的导航提示，松开或失焦清理；已打开的 Pi 立即切换，未打开的历史松开后需 Enter 确认。方向导航由 renderer 处理，文本框保留编辑操作；项目编号、菜单和设置共用快捷键定义。旧的不安全绑定加载时逐项丢弃，不影响其他有效自定义；`tests/keyboard-navigation.test.cjs` 与 `tests/shortcuts-navigation.test.cjs` 验证事件透传、冲突和迁移。
+- 应用导航只使用含 ⌘ 的组合：⌘↑/↓ 切换侧栏会话，⌘←/→ 切换标签，⌘1–9/0 切换可见项目。单独 Option、Ctrl 及其组合不被应用拦截，保留给 Pi 与文本输入，包括 Pi 的 Ctrl+] 字符跳转。长按 ⌘ 500ms 显示当前配置的导航提示，松开或失焦清理；已打开的 Pi 立即切换，未打开的历史松开后需 Enter 确认。方向导航由 renderer 处理，文本框保留编辑操作；项目编号、菜单和设置共用快捷键定义。旧的不安全绑定加载时逐项丢弃，不影响其他有效自定义；`tests/keyboard-navigation.test.cjs` 与 `tests/shortcuts-navigation.test.cjs` 验证事件透传、冲突和迁移。
+- 新手引导复用原生 Dialog 和现有偏好 IPC，只在窗口启动且 `onboardingSeen` 未设置时自动展示；跳过、Esc 或完成均记入 `projects.json`，设置页可重新打开。不自动启动会话、不要求执行快捷键，键帽从当前绑定派生（含禁用项），替代首次使用只能查 README 的负担。存储校验、控制器单测和 `tests/onboarding-smoke.cjs` 验证首次展示、持久化、键盘翻页与模态隔离；CI/回归输出及提交定位责任和上下文。无新文件存储、遥测或后台循环；若后续改为上下文内提示，维护者可整体删除引导组件和此偏好字段，不影响 Pi 数据。
 - 主题令牌集中在 `styles.css` 的 `:root` 与 sidebar 覆盖块；终端配色独立在 `shared/terminal-theme.ts`，两处共享背景、光标与选区颜色以保持接缝一致。
 - 界面文案走 `shared/i18n.ts` 的中文 source key 词表；zh-CN 默认返回原文，en-US 查 `shared/locales/*`。语言偏好由 `publishPreferences` 同步 main/renderer，切换只重渲染，不重启终端；主进程菜单与错误在产生文案时翻译。静态词表/占位符/源码覆盖由 `tests/i18n.test.cjs` 约束，英文运行时无中文残留由 `tests/i18n-smoke.cjs` 验证；维护规则见 `docs/i18n.md`。
 - 顶部单行标题与贯穿窗口的侧栏分界线由网格位置约束；回归验证 48px 标题栏、原生按钮安全区、历史图标无障碍名称和主区起始位置，替代旧双层标题与右侧工具块。原生菜单使用可重建的模板图集，测试对齐 SVG 图集顺序、像素及逻辑尺寸；无菜单轮询、外部图标依赖或额外设置。

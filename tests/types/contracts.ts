@@ -27,6 +27,9 @@ api.createPi('project', { fork: 'true' });
 api.readVersion(true);
 api.checkAppUpdate(true);
 api.setPreferences({ checkAppUpdates: false });
+api.setPreferences({ onboardingSeen: true });
+// @ts-expect-error Onboarding persistence only accepts booleans.
+api.setPreferences({ onboardingSeen: 'true' });
 // @ts-expect-error Update check accepts only a boolean force flag.
 api.checkAppUpdate('force');
 // @ts-expect-error Startup update preference must be boolean.

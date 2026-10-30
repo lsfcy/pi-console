@@ -16,7 +16,7 @@ async function load(entry, mockPath, mockSource, globals = {}) {
   const module = { exports: {} };
   vm.runInNewContext(result.outputFiles[0].text, {
     module, exports: module.exports, structuredClone, setTimeout, clearTimeout,
-    document: { getElementById: () => null, hasFocus: () => true }, ...globals
+    document: { getElementById: () => null, querySelector: () => null, hasFocus: () => true }, ...globals
   });
   return module.exports;
 }
@@ -78,6 +78,45 @@ test('窗口销毁后的异步初始快照不复活状态或订阅', async () =>
   assert.equal(subscriptions, 0);
   assert.equal(app.ready, false);
   assert.equal(app.projects.length, 0);
+});
+test('首次展示引导，跳过或完成仅保存一次，刷新不重开，已查看可手动重开', async () => {
+  const { WorkspaceController } = await loadController();
+  for (const seen of [undefined, false, true]) {
+    for (const projects of [[], [{id:'p',name:'Project',path:'/project'}]]) {
+      const writes = [];
+      const snapshot = {projects,terminals:[],history:[],selectedId:projects[0]?.id || null,library:{loading:false,roots:[],warnings:[]},
+        preferences:{onboardingSeen:seen},appearance:'dark',sidebarAppearance:'dark',update:null,appVersion:'test'};
+      const app = new WorkspaceController({
+        onEvent: () => () => {}, snapshot: async () => snapshot,
+        setPreferences: async patch => { writes.push(patch); return {preferences:patch,appearance:'dark',sidebarAppearance:'dark'}; }
+      });
+      await app.start();
+      assert.equal(app.onboardingOpen, seen !== true);
+      if (!app.onboardingOpen) app.openOnboarding();
+      assert.equal(app.modalOpen(), true);
+      app.dismissOnboarding(); app.dismissOnboarding(); await Promise.resolve();
+      assert.equal(app.onboardingOpen, false);
+      assert.equal(app.preferences.onboardingSeen, true);
+      assert.equal(writes.length, seen === true ? 0 : 1);
+      app.applySnapshot({...snapshot,preferences:app.preferences});
+      assert.equal(app.onboardingOpen, false, 'library refresh does not restart the guide');
+      app.openOnboarding(); assert.equal(app.onboardingOpen,true);
+      app.dismissOnboarding(); await Promise.resolve();
+      assert.equal(writes.length, seen === true ? 0 : 1, 'reopening needs no extra persistence');
+      app.dispose();
+    }
+  }
+});
+test('保存引导标记失败时提示错误，不困住当前窗口也不自动重试', async () => {
+  const { WorkspaceController } = await loadController();
+  let writes = 0;
+  const app = new WorkspaceController({setPreferences:async()=>{writes++;throw new Error('cannot save guide');}});
+  app.openOnboarding(); app.dismissOnboarding();
+  for (let i=0;i<4;i++) await Promise.resolve();
+  assert.equal(app.onboardingOpen,false);
+  assert.equal(writes,1);
+  assert.match(app.notices.value.message,/cannot save guide/);
+  app.dispose();
 });
 test('仅已打包且允许检查的窗口启动时自动查一次，沙箱与用户关闭不联网', async () => {
   const { WorkspaceController } = await loadController();

@@ -361,7 +361,7 @@ async function windowEnvironment(t, app) {
   };
 }
 
-test('Command 导航立即生效但满 1000ms 才显示提示，方向键和 repeat 不提前显示或重置计时', async t => {
+test('Command 导航立即生效但满 500ms 才显示提示，方向键和 repeat 不提前显示或重置计时', async t => {
   const { app } = await workspace(t);
   const env = await windowEnvironment(t, app);
   env.event('keydown'); env.tick(400);
@@ -369,7 +369,7 @@ test('Command 导航立即生效但满 1000ms 才显示提示，方向键和 rep
   assert.equal(app.workspace.activeId('beta'), 'b'); assert.equal(app.navHeld, false);
   env.event('keydown', { key: 'ArrowUp', repeat: true });
   env.event('keydown', { repeat: true });
-  env.tick(599); assert.equal(app.navHeld, false);
+  env.tick(99); assert.equal(app.navHeld, false);
   env.tick(1); assert.equal(app.navHeld, true);
   env.event('keyup', { metaKey: false });
   assert.equal(app.navHeld, false); assert.equal(app.navTarget, null); assert.equal(app.navPending, false);
@@ -379,7 +379,7 @@ test('每次快速切换各自计时，松开后不延迟闪出提示且不丢�
   const { app, creates } = await workspace(t);
   const env = await windowEnvironment(t, app);
   for (let index = 0; index < 2; index++) {
-    env.event('keydown'); env.tick(650); app.stepSidebarSession(-1);
+    env.event('keydown'); env.tick(300); app.stepSidebarSession(-1);
     assert.equal(app.navHeld, false);
     env.event('keyup', { metaKey: false }); env.tick(1100);
     assert.equal(app.navHeld, false);
@@ -397,7 +397,7 @@ test('短按期间 Esc、点击、失焦和卸载均取消待展示提示，不�
   for (const cancel of ['Escape', 'pointerdown', 'blur', 'cleanup']) {
     const { app } = await workspace(t);
     const env = await windowEnvironment(t, app);
-    env.event('keydown'); env.tick(500); app.stepSidebarSession(1);
+    env.event('keydown'); env.tick(250); app.stepSidebarSession(1);
     if (cancel === 'Escape') { env.event('keydown', { key: 'Escape' }); app.cancelNav(); }
     else if (cancel === 'cleanup') env.cleanup();
     else env.event(cancel);
@@ -477,6 +477,16 @@ test('文本框保留方向编辑，弹窗和输入法不触发导航', async t 
       assert.equal(key(code,{target:new Element(tag)}).prevented,false);
   assert.equal(key('ArrowUp',{isComposing:true}).prevented,false);
   app.modal=true; assert.equal(key('ArrowUp').prevented,false); assert.equal(calls.length,0);
+});
+test('引导阻止原生菜单快捷键穿透，关闭引导不关闭 Pi 标签', async t => {
+  const {app,calls,key}=await keyboard(t);
+  app.onboardingOpen=true; app.modal=true;
+  app.dismissOnboarding=()=>{calls.push(['dismiss-guide']);app.onboardingOpen=false;};
+  for (const command of ['new-tab','new-temporary-tab','settings','about','search','sidebar-next','end-all']) app.dispatchShortcut(command);
+  assert.equal(key('ArrowRight',{metaKey:false}).prevented,false, 'unmodified page navigation belongs to the guide');
+  assert.equal(calls.length,0);
+  app.dispatchShortcut('close-tab');
+  assert.deepEqual(calls,[['dismiss-guide']]);
 });
 test('录制只接收 Command，待进入历史仅无修饰 Enter 确认', async t => {
   const {app,calls,key}=await keyboard(t);

@@ -115,6 +115,17 @@ test('亮暗色/字号/布局设置有边界且持久化，不改 Pi 配置', t 
   assert.throws(() => store.setPreferences({ fontSize: 100 }), /范围/);
   assert.throws(() => store.setPreferences({ command: 'exec something' }), /设置/);
 });
+test('引导已查看标记只接受布尔值，默认未查看且复用现有配置持久化', t => {
+  const { store, file } = fixture(t);
+  assert.equal(store.preferences().onboardingSeen, false);
+  store.setPreferences({ onboardingSeen: true });
+  assert.equal(new ProjectStore(file).preferences().onboardingSeen, true);
+  store.setPreferences({ fontSize: 16 });
+  assert.equal(store.preferences().onboardingSeen, true, 'unrelated changes preserve the flag');
+  for (const value of ['true', 1, null, {}, []]) assert.throws(() => store.setPreferences({ onboardingSeen: value }), /范围/);
+  store.save({ ...store.snapshot(), preferences: { onboardingSeen: 'true' } });
+  assert.equal(new ProjectStore(file).preferences().onboardingSeen, false, 'malformed stored values cannot suppress onboarding');
+});
 test('旧单主题配置只在归一化边界迁移，后续存储不保留重复主题字段', t => {
   const { store, file } = fixture(t);
   store.save({ ...store.snapshot(), preferences: { theme: 'dark', fontSize: 16 } });

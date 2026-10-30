@@ -16,7 +16,7 @@ const guiData = path.join(temporary, 'gui-config');
 const piData = path.join(temporary, 'pi-config');
 for (const directory of [project, guiData, piData, artifacts]) fs.mkdirSync(directory, { recursive: true });
 fs.writeFileSync(path.join(guiData, 'projects.json'), JSON.stringify({
-  version: 1, projects: [{ id: 'packaged-test', name: 'packaged-project', path: fs.realpathSync(project) }], selectedId: 'packaged-test'
+  version: 1, preferences: { onboardingSeen: true }, projects: [{ id: 'packaged-test', name: 'packaged-project', path: fs.realpathSync(project) }], selectedId: 'packaged-test'
 }));
 fs.writeFileSync(path.join(piData, 'settings.json'), JSON.stringify({
   defaultProvider: 'anthropic', defaultModel: 'claude-sonnet-4-6', quietStartup: true,
@@ -91,6 +91,14 @@ async function port() {
   }
   await until(() => evaluate('window.piGuiReady === true'), 'packaged app ready');
   assert.equal(await evaluate('document.getElementById("app-version").textContent'), require('../package.json').version, 'tested package matches the release version');
+  assert.equal(await evaluate('onboardingOpen'), false, 'seen guide stays closed in the package');
+  await evaluate('openOnboarding()');
+  await until(() => evaluate('document.getElementById("onboarding-dialog").open'), 'packaged guide opens');
+  assert.equal(await evaluate('document.querySelector("[data-onboarding-shortcut=new-tab]").textContent'), '⌘ N');
+  await evaluate('document.querySelector(\'[data-onboarding-step="1"]\').click()');
+  assert((await evaluate('document.getElementById("onboarding-description").textContent')).includes('0.5'), 'packaged guide describes the half-second hold');
+  await evaluate('dismissOnboarding()');
+  await until(() => evaluate('!document.getElementById("onboarding-dialog").open'), 'packaged guide closes without starting Pi');
   const duplicate = spawn(executable, [], { env: { ...process.env, PI_GUI_DATA_DIR: guiData, PI_GUI_TEST_MODE: '1' }, stdio: 'pipe' });
   let duplicateErrors = ''; duplicate.stderr.on('data', data => { duplicateErrors += data; });
   await new Promise((resolve, reject) => {

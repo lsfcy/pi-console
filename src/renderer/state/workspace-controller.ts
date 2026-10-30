@@ -39,7 +39,7 @@ export class WorkspaceController extends ObservableModel {
   library: LibraryStatus = { loading: true, roots: [], warnings: [] };
   appVersion = ''; sandboxMode = false; ready = false; testMode = false;
   appRelease: AppRelease | null = null; appUpdateChecking = false; appUpdateError = '';
-  paletteOpen = false;
+  paletteOpen = false; onboardingOpen = false;
   confirmation: ConfirmationRequest | null = null;
   statsTarget: HistorySession | null = null; renameTarget: RenameRequest | null = null; projectEditTarget: string | null = null; aboutOpen = false;
   update: UpdateLog | null = null; updateLaunching = false; updateOutput = '';
@@ -84,6 +84,7 @@ export class WorkspaceController extends ObservableModel {
       const snapshot = await this.bridge.snapshot();
       if (this.disposed || generation !== this.generation) return;
       this.applySnapshot(snapshot); this.ready = true;
+      this.onboardingOpen = !this.preferences.onboardingSeen;
       this.automaticUpdatesSupported = snapshot.automaticAppUpdateCheck === true; this.publish();
       if (this.automaticUpdatesSupported && this.preferences.checkAppUpdates) this.startAppUpdateChecks();
     } catch (error) { this.notify(message(error)); }
@@ -364,6 +365,17 @@ export class WorkspaceController extends ObservableModel {
     this.pendingPreferences = { ...this.pendingPreferences, ...patch };
     clearTimeout(this.preferenceTimer); this.preferenceTimer = setTimeout(() => void this.savePreferences({}), 160);
   }
+  openOnboarding = () => {
+    this.stopShortcutRecording(); this.cancelNav(); this.onboardingOpen = true; this.publish();
+  };
+  dismissOnboarding = () => {
+    if (!this.onboardingOpen) return;
+    this.onboardingOpen = false;
+    if (!this.preferences.onboardingSeen) {
+      this.applyPreferences({ onboardingSeen: true });
+      void this.savePreferences({ onboardingSeen: true });
+    } else this.publish();
+  };
   openSettings = async (section = this.settingsSection) => {
     this.stopShortcutRecording(); this.route = 'settings'; this.settingsSection = section; this.syncCurrent(); this.publish();
     void this.readPiVersion(); void this.readPackages();
@@ -449,7 +461,7 @@ export class WorkspaceController extends ObservableModel {
     try { await this.bridge.clearUpdateLog(); this.update = null; this.updateOutput = ''; this.publish(); }
     catch (error) { this.notify(message(error)); }
   }
-  modalOpen = () => Boolean(this.paletteOpen || this.confirmation || document.querySelector('dialog[open]'));
+  modalOpen = () => Boolean(this.onboardingOpen || this.paletteOpen || this.confirmation || document.querySelector('dialog[open]'));
   closeTopModal = () => {
     if (this.paletteOpen) { this.closePalette(); return; }
     const dialog = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')].at(-1);

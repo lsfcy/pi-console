@@ -11,6 +11,7 @@ import { Resizer } from './components/Resizer.js';
 import { Notice } from './components/Notice.js';
 import { ConfirmationDialog } from './components/ConfirmationDialog.js';
 import { AboutDialog } from './components/AboutDialog.js';
+import { OnboardingDialog } from './features/onboarding/OnboardingDialog.js';
 import { ProjectDialog } from './features/sessions/ProjectDialog.js';
 import { RenameDialog } from './features/sessions/RenameDialog.js';
 import { StatsDialog } from './features/monitor/StatsDialog.js';
@@ -29,7 +30,7 @@ function Application() {
   }, [app, app.ready, app.testMode]);
   return <>
     <IconDefinitions /><Chrome /><Sidebar /><Resizer /><Workspace />
-    <ProjectDialog /><RenameDialog /><StatsDialog /><AboutDialog /><ConfirmationDialog /><Notice />
+    <ProjectDialog /><RenameDialog /><StatsDialog /><AboutDialog /><OnboardingDialog /><ConfirmationDialog /><Notice />
     {app.paletteOpen && <CommandPalette />}
   </>;
 }
