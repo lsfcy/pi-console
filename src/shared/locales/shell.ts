@@ -1,5 +1,6 @@
 /** English strings for renderer shell, window chrome, and controller notices. */
 export const shellEn: Record<string, string> = {
+  '拖拽调整项目顺序；也可右键项目上移或下移。': 'Drag to reorder projects, or right-click a project to move it up or down.',
   '沙箱': 'Sandbox',
   '正在读取本地 Pi 历史…': 'Reading local Pi history…',
   '重新扫描本地 Pi 会话，刷新项目与会话列表；不会更新软件。': 'Rescan local Pi sessions to refresh projects and sessions. This does not update the app.',
@@ -9,7 +10,7 @@ export const shellEn: Record<string, string> = {
   'Pi 正在更新，请稍后新建会话': 'Pi is updating. Start a session later.',
   '正在新建会话…': 'Starting a session…',
   '在“{name}”中新建 Pi 会话': 'New Pi session in “{name}”',
-  '{name}；右键可置顶或编辑项目。': '{name}; right-click to pin or edit the project.',
+  '{name}；拖拽调整顺序，右键可置顶或编辑项目。': '{name}; drag to reorder, or right-click to pin or edit the project.',
   '{count} 个 Pi 已打开': '{count} Pi open',
   '{count} 个 Pi 已在本应用打开': '{count} Pi open in this app',
   '；右键可新建临时会话（不保存历史，⌘⇧N）': '; right-click for a temporary session (not saved, ⌘⇧N)',

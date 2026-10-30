@@ -233,8 +233,8 @@ async function activate(id) { await js('document.querySelector(\'.tab-select[dat
   await screenshot('v04-history-list');
   await js('window.piGui.setPreferences({historyLayout:"cards",cardColumns:3})');controller.window.setSize(1400,900);
 
-  // Real renderer drag/drop; the backend validates a complete permutation.
-  await js(`(() => { const a=document.querySelector('[data-project-id="${a.id}"]'); const b=document.querySelector('[data-project-id="${b.id}"]'); const d=new DataTransfer(); b.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:d})); a.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:d,clientY:a.getBoundingClientRect().top+1})); a.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:d,clientY:a.getBoundingClientRect().top+1})); b.dispatchEvent(new DragEvent('dragend',{bubbles:true,dataTransfer:d})); })()`);
+  // Pointer interaction is covered by project-drag-smoke; exercise the persisted complete-permutation IPC here.
+  await js('window.piGui.reorderProjects(' + JSON.stringify([b.id, a.id]) + ')');
   await until(() => controller.projects.snapshot().projects[0].id === b.id, 'project drag ordering');
   await controller.refreshLibrary();
   assert.deepEqual(controller.projects.snapshot().projects.map(p => p.id), [b.id, a.id]);

@@ -7,6 +7,14 @@ export function sessionMarkFor(marks: SessionMark[], projectId: string | null, s
 export function orderedProjects(projects: Project[]) {
   return [...projects].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)));
 }
+/** Move within a pin group without dropping filtered-out projects or mutating the snapshot. */
+export function projectOrderAfterMove(projects: Project[], sourceId: string, targetId: string, edge: 'before' | 'after'): string[] | null {
+  const source = projects.find(project => project.id === sourceId), target = projects.find(project => project.id === targetId);
+  if (!source || !target || sourceId === targetId || Boolean(source.pinned) !== Boolean(target.pinned)) return null;
+  const ids = projects.map(project => project.id).filter(id => id !== sourceId);
+  ids.splice(ids.indexOf(targetId) + (edge === 'after' ? 1 : 0), 0, sourceId);
+  return ids.some((id, index) => id !== projects[index].id) ? ids : null;
+}
 export function prioritizeSessions(rows: HistorySession[], marks: SessionMark[], scope: SessionMarkKind) {
   const pinned: HistorySession[] = [], rest: HistorySession[] = [];
   for (const row of rows) (isPinnedMark(sessionMarkFor(marks, row.projectId, row.key), scope) ? pinned : rest).push(row);

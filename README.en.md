@@ -49,6 +49,8 @@ Choose or add a project, then use its `+` button to start Pi or reopen a session
 | Open project in Terminal | `⌘T` |
 | Settings / shortcuts | `⌘,` / `⌘/` |
 
+Drag a project name or its grip in the sidebar to reorder projects; the order is saved on release. Pinned projects reorder within their pinned group. Move up / Move down are also available in the project’s context menu.
+
 A skippable quick-start guide appears on first launch. Reopen it from Settings → Quick start; it shows your current shortcut bindings.
 
 Hold `⌘` for **0.5 seconds** to see navigation hints. Shortcuts can be changed in Settings. The app uses `⌘` plus arrow keys for navigation; ordinary text fields keep their native editing behavior.

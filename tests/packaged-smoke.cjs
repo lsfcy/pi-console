@@ -94,6 +94,7 @@ async function port() {
   assert.equal(await evaluate('onboardingOpen'), false, 'seen guide stays closed in the package');
   await evaluate('openOnboarding()');
   await until(() => evaluate('document.getElementById("onboarding-dialog").open'), 'packaged guide opens');
+  assert.equal(await evaluate('getComputedStyle(document.getElementById("onboarding-step-title")).outlineStyle'), 'none', 'packaged guide titles have no selection-like outline');
   assert.equal(await evaluate('document.querySelector("[data-onboarding-shortcut=new-tab]").textContent'), '⌘ N');
   await evaluate('document.querySelector(\'[data-onboarding-step="1"]\').click()');
   assert((await evaluate('document.getElementById("onboarding-description").textContent')).includes('0.5'), 'packaged guide describes the half-second hold');
@@ -143,6 +144,8 @@ async function port() {
   assert.equal(await evaluate('getComputedStyle(document.querySelector(".chrome-heading")).borderBottomWidth'), '0px');
   assert.equal(await evaluate('document.querySelectorAll("#project-list .project-location, #project-list .status-label").length'), 0);
   assert(await evaluate('document.querySelector(".project-item").hasAttribute("aria-expanded")'), 'packaged folder is collapsible');
+  assert.equal(await evaluate('document.querySelectorAll(".project-drag-handle").length'), 1, 'packaged projects expose a drag grip');
+  assert.equal(await evaluate('document.querySelector(".project-row").draggable'), false, 'pointer gestures replace native HTML drag');
   assert.equal(await evaluate('typeof window.piGui.updateProject'), 'function');
   await evaluate('document.getElementById("new-tab").click()');
   let state;

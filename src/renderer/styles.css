@@ -88,15 +88,21 @@ kbd { font: 11px/1.5 var(--font); color: var(--quiet); white-space: nowrap; }
 .list-heading { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 18px 7px 23px; font-size: 11px; color: var(--muted); }
 .sidebar-library { min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 #project-list { padding: 0 11px; }
-.project-group { margin: 0 0 2px; }
-.project-row { display: flex; align-items: center; gap: 2px; }
+.project-group { margin: 0 0 2px;position:relative; }
+.project-row { display: flex; align-items: center; gap: 2px;user-select:none; }
 .project-new-pi { flex-shrink: 0; }
-.project-item { flex: 1; min-width: 0; min-height: 36px; display: flex; align-items: center; gap: 9px; padding: 7px 10px; margin: 0; border-radius: 7px; background: transparent; text-align: left; position: relative; border: 1px solid transparent; }
+.project-item { flex: 1; min-width: 0; min-height: 36px; display: flex; align-items: center; gap: 9px; padding: 7px 10px; margin: 0; border-radius: 7px; background: transparent; text-align: left; position: relative; border: 1px solid transparent;cursor:grab; }
 .project-item:hover, .project-item.search-hit { background: var(--hover); }
 .project-item[aria-current="page"] { background: var(--selected); }
-.project-item.drag-before { border-top-color: var(--accent); }
-.project-item.drag-after { border-bottom-color: var(--accent); }
-.project-item.dragging { opacity: .45; }
+.project-item:active { cursor:grabbing; }
+.project-drag-handle { display:flex;align-items:center;justify-content:center;width:12px;align-self:stretch;flex-shrink:0;cursor:grab;color:var(--muted); }
+.project-drag-handle:hover { color:var(--text); }
+.project-drag-handle:active { cursor:grabbing; }
+.project-drag-handle .icon { width:12px;height:18px;pointer-events:none; }
+.project-group.dragging { opacity:.45; }
+.project-group.drag-before::before, .project-group.drag-after::after { content:"";position:absolute;left:0;right:0;height:2px;background:var(--accent);border-radius:1px;z-index:4;pointer-events:none; }
+.project-group.drag-before::before { top:-1px; }
+.project-group.drag-after::after { bottom:-1px; }
 .project-icon { width: 18px; height: 18px; flex-shrink: 0; display: grid; place-items: center; color: var(--muted); }
 .project-presence, .sidebar-session-presence { position: absolute; top: 50%; transform: translateY(-50%); width: 5px; height: 5px; border-radius: 50%; background: var(--presence); }
 .project-presence { left: 2px; }
@@ -282,7 +288,8 @@ h1 { font-size: 28px; font-weight: 500; letter-spacing: -.6px; margin: 12px 0; }
 .onboarding-page-heading { display:flex;align-items:center;gap:10px; }
 .onboarding-page-heading > .icon { width:24px;height:24px;color:var(--accent); }
 .onboarding-page h3 { margin:0;font-size:21px;font-weight:600; }
-.onboarding-page h3:focus-visible { outline:2px solid var(--accent);outline-offset:3px; }
+/* Focus announces the step heading; only interactive controls need a visible focus ring. */
+.onboarding-page h3:focus { outline:none; }
 .onboarding-page > p { margin:12px 0 16px;color:var(--muted);font-size:12px;line-height:1.8; }
 .onboarding-shortcuts { margin:0; }
 .onboarding-shortcut { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border); }

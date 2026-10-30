@@ -9,6 +9,7 @@ import { Icon } from './Icon.js';
 import { SidebarStatus, UnreadDot, SessionMarks } from './Status.js';
 import { useCommandTitle } from './ShortcutHint.js';
 import { bindings, format, projectCommands } from '../../shared/shortcuts.js';
+import { useProjectDrag } from '../hooks/useProjectDrag.js';
 
 function SidebarSession({ info, now, target }: { info: HistorySession; now: number; target?: boolean }) {
   const app = useWorkspace();
@@ -43,7 +44,7 @@ function SidebarSession({ info, now, target }: { info: HistorySession; now: numb
 }
 
 export function Sidebar() {
-  const app = useWorkspace(), dragging = useRef<string | null>(null);
+  const app = useWorkspace(), drag = useProjectDrag(app);
   const [now, setNow] = useState(Date.now);
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(timer); }, []);
   const restoreFocus = useRef<{ listId: string; index: number } | null>(null);
@@ -87,28 +88,19 @@ export function Sidebar() {
         const listId = 'project-sessions-' + project.id;
         const pending = app.pendingProjects.has(project.id), updating = Boolean(app.update?.state.running);
         const newTitle = project.available === false ? t('目录不存在，无法新建会话') : updating ? t('Pi 正在更新，请稍后新建会话') : pending ? t('正在新建会话…') : t('在“{name}”中新建 Pi 会话', { name: project.name });
-        return <section key={project.id} className={'project-group' + (expanded ? ' expanded' : '')}>
-          <div className="project-row"><button type="button" className={'project-item' + (project.available === false ? ' unavailable' : '') + (query && index === cursor ? ' search-hit' : '')}
-            data-project-id={project.id} data-sidebar-key={'project:' + project.id} draggable title={t('{name}；右键可置顶或编辑项目。', { name: project.name }) + (projectBinding ? '\n' + format(projectBinding) : '')}
+        return <section key={project.id} className={'project-group' + (expanded ? ' expanded' : '') + (drag.state?.source === project.id ? ' dragging' : '') + (drag.state?.target?.id === project.id ? ' drag-' + drag.state.target.edge : '')}
+          data-project-group-id={project.id}>
+          <div className="project-row" onPointerDown={event => drag.start(event, project.id)} onClickCapture={drag.click}>
+            <span className="project-drag-handle" aria-hidden="true" title={t("拖拽调整项目顺序；也可右键项目上移或下移。")}><Icon name="grip" /></span>
+            <button type="button" className={'project-item' + (project.available === false ? ' unavailable' : '') + (query && index === cursor ? ' search-hit' : '')}
+            data-project-id={project.id} data-sidebar-key={'project:' + project.id} title={t('{name}；拖拽调整顺序，右键可置顶或编辑项目。', { name: project.name }) + (projectBinding ? '\n' + format(projectBinding) : '')}
             aria-keyshortcuts={projectDigit ? 'Meta+' + projectDigit : undefined}
             aria-expanded={expanded} aria-controls={listId}
             aria-current={app.route === 'project' && project.id === app.selectedId && (!expanded || app.workspace.activeId(project.id) === 'history') ? 'page' : undefined}
             onClick={() => { app.setProjectExpanded(project.id, !expanded); app.selectProject(project.id, false); }}
             onKeyDown={event => { if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return; event.preventDefault();
               app.setProjectExpanded(project.id, event.key === 'ArrowRight'); }}
-            onContextMenu={event => { event.preventDefault(); app.safely(() => app.bridge.projectMenu(project.id)); }}
-            onDragStart={event => { dragging.current = project.id; event.dataTransfer.setData('application/x-pi-project', project.id); event.dataTransfer.effectAllowed = 'move'; event.currentTarget.classList.add('dragging'); }}
-            onDragOver={event => { if (!dragging.current || dragging.current === project.id || Boolean(app.projects.find(p => p.id === dragging.current)?.pinned) !== Boolean(project.pinned)) return; event.preventDefault(); event.dataTransfer.dropEffect = 'move';
-              const before = event.clientY < event.currentTarget.getBoundingClientRect().top + event.currentTarget.clientHeight / 2;
-              event.currentTarget.classList.toggle('drag-before', before); event.currentTarget.classList.toggle('drag-after', !before); }}
-            onDragLeave={event => event.currentTarget.classList.remove('drag-before', 'drag-after')}
-            onDragEnd={event => { dragging.current = null; event.currentTarget.classList.remove('dragging'); }}
-            onDrop={event => { event.preventDefault(); event.currentTarget.classList.remove('drag-before', 'drag-after');
-              const source = event.dataTransfer.getData('application/x-pi-project'); if (!source || source === project.id || Boolean(app.projects.find(p => p.id === source)?.pinned) !== Boolean(project.pinned)) return;
-              const ids = app.projects.map(p => p.id).filter(id => id !== source);
-              const offset = event.clientY < event.currentTarget.getBoundingClientRect().top + event.currentTarget.clientHeight / 2 ? 0 : 1;
-              ids.splice(ids.indexOf(project.id) + offset, 0, source); dragging.current = null;
-              app.safely(async () => app.applySnapshot(await app.bridge.reorderProjects(ids))); }}>
+            onContextMenu={event => { event.preventDefault(); app.safely(() => app.bridge.projectMenu(project.id)); }}>
             {openPiCount > 0 && <span className="project-presence" role="img" aria-label={t('{count} 个 Pi 已打开', { count: openPiCount })} title={t('{count} 个 Pi 已在本应用打开', { count: openPiCount })} />}
             <span className="project-icon"><Icon name={expanded ? 'folder-open' : 'folder'} /><Icon name="chevron" />
               {app.navHeld && projectDigit && <kbd className="project-shortcut" data-shortcut={projectCommand?.id} aria-hidden="true">{projectDigit}</kbd>}

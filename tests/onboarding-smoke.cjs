@@ -33,6 +33,11 @@ async function until(check, label, timeout = 10000) {
   const guideOpen = () => js('document.getElementById("onboarding-dialog").open');
   const step = () => js('Number(document.querySelector("[data-onboarding-step][aria-current]").dataset.onboardingStep)');
   const click = selector => js('document.querySelector(' + JSON.stringify(selector) + ').click()');
+  const assertHeadingFocus = async () => {
+    assert.equal(await js('document.activeElement.id'), 'onboarding-step-title', 'step heading remains the screen-reader focus target');
+    assert.equal(await js('getComputedStyle(document.getElementById("onboarding-step-title")).outlineStyle'), 'none', 'non-interactive titles have no selection-like focus box');
+    assert.equal(await js('window.getSelection().toString()'), '', 'opening or changing steps does not select text');
+  };
   const key = async (keyCode, modifiers = []) => {
     contents.sendInputEvent({ type: 'keyDown', keyCode, modifiers });
     contents.sendInputEvent({ type: 'keyUp', keyCode, modifiers }); await delay(70);
@@ -54,7 +59,10 @@ async function until(check, label, timeout = 10000) {
   await contents.debugger.sendCommand('Emulation.setFocusEmulationEnabled', { enabled: true });
   assert.equal(await guideOpen(), true, 'existing profiles without a seen flag also get the guide');
   assert.equal(await step(), 0);
-  assert.equal(await js('document.activeElement.id'), 'onboarding-step-title');
+  await assertHeadingFocus();
+  await key('Tab');
+  assert.equal(await js('document.activeElement.tagName'), 'BUTTON');
+  assert.equal(await js('document.activeElement.matches(":focus-visible") && getComputedStyle(document.activeElement).outlineStyle === "solid"'), true, 'keyboard users retain visible button focus');
   await screenshot('onboarding-dark-zh');
   await key('N', ['meta']);
   await key(',', ['meta']);
@@ -62,7 +70,7 @@ async function until(check, label, timeout = 10000) {
   await js('__consoleTest.shortcut("new-temporary-tab"); __consoleTest.shortcut("end-all")');
   assert.equal(spawned, 0, 'guide cannot start sessions through native or renderer shortcuts');
   assert.equal(await js('__consoleTest.route'), 'project', 'settings accelerator does not change the page beneath the guide');
-  await key('Right'); assert.equal(await step(), 1);
+  await key('Right'); assert.equal(await step(), 1); await assertHeadingFocus();
   assert.equal(await js('document.querySelectorAll("[data-onboarding-shortcut^=project-]").length'), 10);
   await key('Right'); assert.equal(await step(), 2);
   await key('Left'); assert.equal(await step(), 1);
@@ -92,6 +100,7 @@ async function until(check, label, timeout = 10000) {
   await click('#open-onboarding');
   for (let page = 0; page < 4; page++) {
     await click('[data-onboarding-step="' + page + '"]');
+    await assertHeadingFocus();
     assert.equal(await js('/[\u4e00-\u9fff]/.test(document.getElementById("onboarding-dialog").innerText)'), false, 'all guide pages are translated');
     const layout = await js('(() => { const dialog=document.getElementById("onboarding-dialog"), footer=document.querySelector(".onboarding-footer"), page=document.querySelector(".onboarding-page"); const d=dialog.getBoundingClientRect(), f=footer.getBoundingClientRect(); return {fits:d.top>=0 && d.bottom<=innerHeight,footer:f.top>=d.top && f.bottom<=d.bottom,overflow:page.scrollWidth>page.clientWidth}; })()');
     assert.equal(layout.fits, true); assert.equal(layout.footer, true); assert.equal(layout.overflow, false);
