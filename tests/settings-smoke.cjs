@@ -5,6 +5,9 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const {app, dialog, Menu, shell} = require('electron');
 const {ProjectStore} = require('../build/main/project-store.cjs');
+const {parseAppVersion} = require('../build/main/app-release.cjs');
+const currentVersion = parseAppVersion(require('../package.json').version);
+const updateVersion = `${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch + 1}`;
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'pi-settings-'));
 const gui=path.join(root,'gui'), pi=path.join(root,'pi'), a=path.join(root,'alpha'), b=path.join(root,'beta');
 const artifacts=path.resolve(__dirname,'../artifacts');
@@ -40,7 +43,7 @@ async function record(id,keyCode,modifiers=['meta']) {
   const originalFetch=global.fetch, originalOpenExternal=shell.openExternal, opened=[];
   global.fetch=async (url) => {
     assert.equal(url, 'https://github.com/lsfcy/pi-console/releases.atom');
-    return new Response('<feed><entry><id>tag:github.com,2008:Repository/123/v0.0.1-rc.2</id></entry></feed>');
+    return new Response('<feed><entry><id>tag:github.com,2008:Repository/123/v' + updateVersion + '</id></entry></feed>');
   };
   shell.openExternal=async url=>{opened.push(url);};
   controller=await startApp();
@@ -68,10 +71,10 @@ async function record(id,keyCode,modifiers=['meta']) {
   await until(()=>controller.projects.preferences().checkAppUpdates===false,'disable startup update check');
   assert.equal(new ProjectStore(controller.projects.file).preferences().checkAppUpdates,false,'update preference survives restart');
   await click('check-app-update');
-  await until(()=>js('document.getElementById("app-update-status").textContent.includes("0.0.1-rc.2")'),'manual app update check');
+  await until(()=>js('document.getElementById("app-update-status").textContent.includes('+q(updateVersion)+')'),'manual app update check');
   await click('open-app-release');
   await until(()=>opened.length===1,'open verified release page');
-  assert.equal(opened[0],'https://github.com/lsfcy/pi-console/releases/tag/v0.0.1-rc.2');
+  assert.equal(opened[0],'https://github.com/lsfcy/pi-console/releases/tag/v'+updateVersion);
   await click('open-app-releases');
   await until(()=>opened.length===2,'open releases as a manual fallback');
   assert.equal(opened[1],'https://github.com/lsfcy/pi-console/releases');
