@@ -193,6 +193,46 @@ test('创建请求的迟到返回值不复活已关闭会话，也不切换到�
     assert.equal(app.pendingProjects.size, 0);
   } finally { app.dispose(); }
 });
+test('创建响应晚于激活事件和用户切换时，不再抢回当前标签', async () => {
+  const { WorkspaceController } = await loadController();
+  const a = piState('a'), b = piState('b');
+  let send, resolve;
+  const app = new WorkspaceController({
+    onEvent: listener => { send = listener; return () => {}; }, snapshot: async () => sessionSnapshot([a, b]),
+    createPi: () => new Promise(done => { resolve = done; }), selectProject: async () => {}
+  });
+  try {
+    await app.start();
+    const pending = app.createPi(true, a.sessionKey);
+    send({ type: 'activate-terminal', id: a.id, runId: a.runId, sessionId: a.sessionId });
+    app.workspace.activate(b.id);
+    resolve(a); await pending;
+    assert.equal(app.workspace.activeId('alpha'), b.id, '响应只结束请求，不重复激活标签');
+  } finally { app.dispose(); }
+});
+test('创建响应先于进程事件时，按事件通道顺序激活并确认未读，不依赖窗口焦点', async () => {
+  const { WorkspaceController } = await loadController({
+    document: { getElementById: () => null, querySelector: () => null, hasFocus: () => false }
+  });
+  const created = piState('created'), reads = [];
+  let send;
+  const app = new WorkspaceController({
+    onEvent: listener => { send = listener; return () => {}; }, snapshot: async () => sessionSnapshot([]),
+    createPi: async () => created, selectProject: async () => {},
+    setSessionUnread: async (...args) => { reads.push(args); }
+  });
+  try {
+    await app.start(); app.route = 'recent';
+    app.unreadSessions = [{ projectId: 'alpha', sessionKey: created.sessionKey }];
+    await app.createPi(true, created.sessionKey, 'alpha');
+    assert.equal(app.workspace.terminals.size, 0, '响应不凭空创建进程');
+    send({ type: 'state', state: created });
+    send({ type: 'activate-terminal', id: created.id, runId: created.runId, sessionId: created.sessionId });
+    await Promise.resolve();
+    assert.equal(app.route, 'project'); assert.equal(app.workspace.activeId('alpha'), created.id);
+    assert.deepEqual(reads, [['alpha', created.sessionKey, false]]);
+  } finally { app.dispose(); }
+});
 test('首次展示引导，跳过或完成仅保存一次，刷新不重开，已查看可手动重开', async () => {
   const { WorkspaceController } = await loadController();
   for (const seen of [undefined, false, true]) {
@@ -321,7 +361,7 @@ test('项目新建 Pi 使用指定项目，等待时去重，成功后展开并�
     assert.equal(app.pendingProjects.has('beta'), true);
     assert.equal(app.selectedId, 'alpha'); assert.equal(app.route, 'settings', '创建成功前不切走');
     const state = { id: 'new-beta', runId: 'run', sessionId: 'session', projectId: 'beta', kind: 'pi', running: true, status: 'idle' };
-    app.handleState(state); // Main publishes process state before the create-pi reply.
+    app.handleState(state); app.activateTerminal(state.id, state); // Main orders state, then activation.
     resolve(state);
     await pending;
     assert.equal(app.pendingProjects.size, 0);

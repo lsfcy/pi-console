@@ -312,7 +312,12 @@ async function startApp({ spawnPty, trashItem = file => shell.trashItem(file), r
   });
   handle('hide-project', hideProject);
   handle('reorder-projects', ids => { projects.reorder(ids); publishProjects(); return snapshot(); });
-  handle('create-pi', (...args) => createPi(...args));
+  handle('create-pi', async (...args) => {
+    const state = await createPi(...args);
+    // State and activation share one ordered event channel; the IPC reply may arrive first or last.
+    if (state) send({ type: 'activate-terminal', id: state.id, runId: state.runId, sessionId: state.sessionId });
+    return state;
+  });
   handle('new-session-menu', id => {
     availableProject(id);
     return new Promise<'normal' | 'temporary' | null>(resolve => {

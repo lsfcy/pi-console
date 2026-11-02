@@ -312,8 +312,8 @@ export class WorkspaceController extends ObservableModel {
     if (this.pendingProjects.has(project.id)) return;
     this.pendingProjects.add(project.id); this.publish();
     try {
-      const state = await this.bridge.createPi(project.id, { resume, sessionKey, ephemeral });
-      if (state && this.workspace.terminals.has(state.id)) this.activateTerminal(state.id, state);
+      // Main orders activation after process state on the event stream, independently of this reply.
+      await this.bridge.createPi(project.id, { resume, sessionKey, ephemeral });
     } catch (error) { this.notify(message(error)); }
     finally { this.pendingProjects.delete(project.id); this.publish(); }
   }
