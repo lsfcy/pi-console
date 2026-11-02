@@ -1,7 +1,7 @@
 {
   "name": "pi-console",
   "productName": "Pi Console",
-  "version": "0.0.1-rc.1",
+  "version": "0.0.1-rc.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/lsfcy/pi-console.git"
