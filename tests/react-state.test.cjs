@@ -21,7 +21,7 @@ async function load(entry, mockPath, mockSource, globals = {}) {
   return module.exports;
 }
 const mockRegistry = `export class TerminalRegistry {
-  views=new Map(); requestLayout(){} dispose(){this.disposed=true;} focus(){}
+  views=new Map(); writes=[]; write(event){this.writes.push(event);} requestLayout(){} discard(){} dispose(){this.disposed=true;} focus(){}
 }`;
 const loadController = (globals = {}) => load('state/workspace-controller.ts', /terminal-registry\.js$/, mockRegistry, globals);
 const mockView = `export class TerminalView {
@@ -78,6 +78,120 @@ test('窗口销毁后的异步初始快照不复活状态或订阅', async () =>
   assert.equal(subscriptions, 0);
   assert.equal(app.ready, false);
   assert.equal(app.projects.length, 0);
+});
+const piState = (id, patch = {}) => ({
+  id, runId: 'run-' + id, sessionId: 'session-' + id, sessionKey: 'key-' + id,
+  projectId: 'alpha', kind: 'pi', running: true, status: 'idle', label: id, startedAt: 1, ...patch
+});
+const sessionSnapshot = terminals => ({
+  projects: [{ id: 'alpha', name: 'Alpha', path: '/alpha' }], selectedId: 'alpha', terminals,
+  history: ['a', 'b'].map(id => ({ id: 'session-' + id, key: 'key-' + id, projectId: 'alpha', title: id, firstMessage: '', modifiedAt: 1 })),
+  library: { loading: false, roots: [], warnings: [] }, preferences: { onboardingSeen: true },
+  appearance: 'dark', sidebarAppearance: 'dark', update: null, appVersion: 'test'
+});
+test('关闭后迟到的快照不复活旧标签，恢复历史后不会出现重复会话或抢走当前标签', async () => {
+  const { WorkspaceController } = await loadController();
+  const selectors = await load('state/selectors.ts', /unused-test-mock/, '');
+  const a = piState('a'), b = piState('b'), stale = sessionSnapshot([a, b]);
+  let send;
+  const closes = [];
+  const app = new WorkspaceController({
+    onEvent: listener => { send = listener; return () => {}; }, snapshot: async () => stale,
+    closeTerminal: async (id, force) => { closes.push([id, force]); send({ type: 'state', state: { ...b, running: false } }); }
+  });
+  try {
+    await app.start();
+    app.closePiTab(b.id);
+    for (let i = 0; i < 4; i++) await Promise.resolve();
+    assert.deepEqual(closes, [[b.id, true]]);
+    assert.equal(app.workspace.activeId('alpha'), a.id);
+    assert.equal(app.sessionHistory.length, 2, '关闭进程不删除已保存的历史');
+    const reopened = { ...b, id: 'reopened-b', runId: 'new-run' };
+    send({ type: 'state', state: reopened });
+    app.applySnapshot(stale);
+    assert.deepEqual(Array.from(app.workspace.terminals.keys()), ['a', 'reopened-b'], '旧快照不能复活已关闭的进程');
+    assert.equal(app.workspace.activeId('alpha'), reopened.id, '刷新不能抢走当前标签');
+    assert.equal(selectors.recentRows(app).length, 2, '历史与已恢复进程只合并成一条会话');
+    assert.equal(app.workspace.tabVisits.get('alpha').includes(b.id), false);
+  } finally { app.dispose(); }
+});
+test('刷新历史的旧进程快照不回滚会话身份、名称、状态或标签顺序', async () => {
+  const { WorkspaceController } = await loadController();
+  const a = piState('a'), b = piState('b'), stale = sessionSnapshot([a, b]);
+  let send;
+  const app = new WorkspaceController({ onEvent: listener => { send = listener; return () => {}; }, snapshot: async () => stale });
+  try {
+    await app.start();
+    const current = { ...a, sessionId: 'replacement', sessionKey: 'replacement-key', label: '新名称', status: 'working' };
+    send({ type: 'state', state: current });
+    app.workspace.activate(a.id);
+    const visits = Array.from(app.workspace.tabVisits.get('alpha'));
+    app.applySnapshot(stale);
+    assert.equal(app.workspace.terminals.get(a.id), current);
+    assert.deepEqual(Array.from(app.workspace.tabVisits.get('alpha')), visits);
+    assert.equal(app.workspace.activeId('alpha'), a.id);
+  } finally { app.dispose(); }
+});
+test('初始快照等待期间的关闭和新建事件优先于快照，早期输出不丢失且加载后继续接收事件', async () => {
+  const { WorkspaceController } = await loadController();
+  const a = piState('a'), b = piState('b');
+  let send, resolve;
+  const app = new WorkspaceController({
+    onEvent: listener => { send = listener; return () => {}; },
+    snapshot: () => new Promise(done => { resolve = done; })
+  });
+  try {
+    const starting = app.start();
+    send({ type: 'state', state: { ...b, running: false } });
+    const newest = piState('c');
+    send({ type: 'state', state: newest });
+    send({ type: 'data', id: newest.id, runId: newest.runId, kind: 'pi', data: '启动期间的输出' });
+    resolve(sessionSnapshot([a, b]));
+    await starting;
+    assert.deepEqual(Array.from(app.workspace.terminals.keys()), ['a', 'c']);
+    assert.equal(app.workspace.activeId('alpha'), newest.id);
+    assert.deepEqual(Array.from(app.terminals.writes, event => event.data), ['启动期间的输出']);
+    send({ type: 'state', state: { ...newest, running: false } });
+    assert.equal(app.workspace.activeId('alpha'), a.id);
+  } finally { app.dispose(); }
+});
+test('初始快照失败时释放事件缓冲，保留进程及其输出并显示错误，不自动重试', async () => {
+  const { WorkspaceController } = await loadController();
+  let send, reject, requests = 0;
+  const app = new WorkspaceController({
+    onEvent: listener => { send = listener; return () => {}; },
+    snapshot: () => { requests++; return new Promise((_, fail) => { reject = fail; }); }
+  });
+  try {
+    const starting = app.start(), a = piState('a');
+    send({ type: 'state', state: a });
+    send({ type: 'data', id: a.id, runId: a.runId, kind: 'pi', data: '早期输出' });
+    reject(new Error('读取失败')); await starting;
+    send({ type: 'data', id: a.id, runId: a.runId, kind: 'pi', data: '后续输出' });
+    assert.equal(app.workspace.terminals.get(a.id), a);
+    assert.deepEqual(Array.from(app.terminals.writes, event => event.data), ['早期输出', '后续输出']);
+    assert.equal(app.ready, false); assert.match(app.notices.value.message, /读取失败/);
+    assert.equal(requests, 1);
+  } finally { app.dispose(); }
+});
+test('创建请求的迟到返回值不复活已关闭会话，也不切换到其他会话', async () => {
+  const { WorkspaceController } = await loadController();
+  const a = piState('a'), created = piState('created');
+  let send, resolve;
+  const app = new WorkspaceController({
+    onEvent: listener => { send = listener; return () => {}; }, snapshot: async () => sessionSnapshot([a]),
+    createPi: () => new Promise(done => { resolve = done; })
+  });
+  try {
+    await app.start();
+    const pending = app.createPi(false);
+    send({ type: 'state', state: created });
+    send({ type: 'state', state: { ...created, running: false } });
+    resolve(created); await pending;
+    assert.deepEqual(Array.from(app.workspace.terminals.keys()), [a.id]);
+    assert.equal(app.workspace.activeId('alpha'), a.id);
+    assert.equal(app.pendingProjects.size, 0);
+  } finally { app.dispose(); }
 });
 test('首次展示引导，跳过或完成仅保存一次，刷新不重开，已查看可手动重开', async () => {
   const { WorkspaceController } = await loadController();
@@ -206,7 +320,9 @@ test('项目新建 Pi 使用指定项目，等待时去重，成功后展开并�
     assert.equal(requests[0][0], 'beta'); assert.equal(requests[0][1].resume, false);
     assert.equal(app.pendingProjects.has('beta'), true);
     assert.equal(app.selectedId, 'alpha'); assert.equal(app.route, 'settings', '创建成功前不切走');
-    resolve({ id: 'new-beta', runId: 'run', sessionId: 'session', projectId: 'beta', kind: 'pi', running: true, status: 'idle' });
+    const state = { id: 'new-beta', runId: 'run', sessionId: 'session', projectId: 'beta', kind: 'pi', running: true, status: 'idle' };
+    app.handleState(state); // Main publishes process state before the create-pi reply.
+    resolve(state);
     await pending;
     assert.equal(app.pendingProjects.size, 0);
     assert.equal(app.selectedId, 'beta'); assert.equal(app.route, 'project');

@@ -512,6 +512,29 @@ async function activate(id) { await js('document.querySelector(\'.tab-select[dat
   assert.equal(await js('workspace.activeId(selectedId)'),first.id,'tab X returns to the previously visited Pi, not adjacent second Pi or history');
   await until(()=>js('views.get('+quoted(first.id)+').container.contains(document.activeElement)'),'closing active Pi restores editor focus');
   assert((await buffer(first.id)).includes('中文草稿，不提交'),'closing another Pi preserves the previous editor draft');
+
+  // Reproduce a library/mutation reply arriving after Cmd+W and reopening the same history.
+  const closeInfo = controller.catalog.sessions.find(info => info.file === secondFile);
+  await js('createPi(true,' + quoted(closeInfo.key) + ')');
+  await until(() => live('pi').length === 3 && live('pi').every(state => state.bridgeReady && state.status === 'idle'), 'saved session ready for Cmd+W');
+  const closingSaved = live('pi').find(state => state.sessionFile === secondFile);
+  const staleBeforeClose = controller.snapshot(), bytesBeforeClose = fs.readFileSync(secondFile);
+  await key('W', ['meta']);
+  await until(() => !controller.terminals.records.has(closingSaved.id), 'Cmd+W stops only the selected saved session');
+  assert.deepEqual(live('pi').map(state => state.id), [first.id, second.id], 'other Pi processes are unchanged');
+  assert(fs.readFileSync(secondFile).equals(bytesBeforeClose), 'Cmd+W neither deletes nor rewrites saved history');
+  await js('createPi(true,' + quoted(closeInfo.key) + ')');
+  await until(() => live('pi').length === 3 && live('pi').every(state => state.bridgeReady), 'closed history can be reopened');
+  const reopenedSaved = live('pi').find(state => state.sessionFile === secondFile);
+  await js('applySnapshot(' + quoted(staleBeforeClose) + ')');
+  assert.deepEqual(await js('workspace.list(selectedId).map(state => state.id)'), live('pi').map(state => state.id), 'late snapshot does not restore a ghost tab');
+  assert.equal(await js('workspace.activeId(selectedId)'), reopenedSaved.id, 'late snapshot does not switch the current session');
+  assert.equal(await js('document.querySelectorAll(' + quoted('[data-sidebar-session-id="' + reopenedSaved.id + '"]') + ').length'), 1, 'reopened history has exactly one sidebar row');
+  assert.equal(await js('document.querySelectorAll(' + quoted('[data-sidebar-session-id="' + closingSaved.id + '"]') + ').length'), 0, 'closed process is absent from the sidebar');
+  await key('W', ['meta']);
+  await until(() => !controller.terminals.records.has(reopenedSaved.id), 'second Cmd+W closes the reopened session');
+  await activate(first.id);
+  assert((await buffer(first.id)).includes('中文草稿，不提交'), 'Cmd+W preserves the remaining session draft');
   await js('views.get(' + quoted(first.id) + ').term.focus()');
   await key('C', ['control']); await key('D', ['control']);
   await until(() => !live('pi').some(state => state.id === first.id), 'Pi Ctrl+D exits');

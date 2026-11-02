@@ -79,15 +79,30 @@ export class WorkspaceController extends ObservableModel {
     this.disposed = false; this.ready = false; this.automaticUpdatesSupported = false; this.stopAppUpdateChecks();
     const generation = ++this.generation;
     this.unsubscribe?.();
-    this.unsubscribe = this.bridge.onEvent(this.onEvent);
+    // Seed process state once, then use only the ordered state-event stream.
+    // Events received while the initial snapshot is in flight must win over that snapshot.
+    let startupEvents: ApplicationEvent[] | null = [];
+    this.unsubscribe = this.bridge.onEvent(event => {
+      // Keep workspace state and output ordered together so early PTY bytes are not discarded.
+      const workspaceEvent = event.type === 'state' && event.state.kind !== 'update' || event.type === 'data' && event.kind !== 'update';
+      if (startupEvents && workspaceEvent) startupEvents.push(event);
+      else this.onEvent(event);
+    });
+    const replayStartupEvents = () => {
+      const events = startupEvents || []; startupEvents = null;
+      for (const event of events) this.onEvent(event);
+    };
     try {
       const snapshot = await this.bridge.snapshot();
       if (this.disposed || generation !== this.generation) return;
-      this.applySnapshot(snapshot); this.ready = true;
+      for (const state of snapshot.terminals) if (state.kind !== 'update') this.workspace.apply(state);
+      this.applySnapshot(snapshot);
+      replayStartupEvents();
+      this.ready = true;
       this.onboardingOpen = !this.preferences.onboardingSeen;
       this.automaticUpdatesSupported = snapshot.automaticAppUpdateCheck === true; this.publish();
       if (this.automaticUpdatesSupported && this.preferences.checkAppUpdates) this.startAppUpdateChecks();
-    } catch (error) { this.notify(message(error)); }
+    } catch (error) { replayStartupEvents(); this.notify(message(error)); }
   }
   dispose() {
     this.disposed = true; this.generation++; this.unsubscribe?.(); this.unsubscribe = undefined; this.appUpdateChecking = false;
@@ -96,15 +111,13 @@ export class WorkspaceController extends ObservableModel {
     if (this.recordingShortcut) void this.bridge.shortcutRecording(false).catch(() => {});
   }
   applySnapshot(snapshot: Snapshot, { select = false } = {}) {
+    // Refresh/mutation replies can predate a close or /resume; only events own workspace process state.
     this.projects = snapshot.projects; this.sessionHistory = snapshot.history; this.library = snapshot.library;
     this.unreadSessions = snapshot.unreadSessions || [];
     this.sessionMarks = snapshot.sessionMarks || [];
     if (this.recentProject !== 'all' && !this.projects.some(p => p.id === this.recentProject)) this.recentProject = 'all';
     this.appVersion = snapshot.appVersion; this.sandboxMode = snapshot.sandbox; this.testMode = snapshot.testMode === true;
     this.applyPreferences(snapshot.preferences, snapshot.appearance, snapshot.sidebarAppearance, false);
-    for (const state of snapshot.terminals) {
-      if (state.kind === 'update') this.update = { state }; else this.workspace.apply(state);
-    }
     if (select || !this.projects.some(p => p.id === this.selectedId)) this.selectedId = snapshot.selectedId || this.projects[0]?.id || null;
     for (const id of this.expandedProjects) if (!this.projects.some(p => p.id === id)) this.expandedProjects.delete(id);
     for (const id of this.sidebarSessionLimits.keys()) if (!this.projects.some(p => p.id === id)) this.sidebarSessionLimits.delete(id);
@@ -300,7 +313,7 @@ export class WorkspaceController extends ObservableModel {
     this.pendingProjects.add(project.id); this.publish();
     try {
       const state = await this.bridge.createPi(project.id, { resume, sessionKey, ephemeral });
-      if (state) { if (!this.workspace.terminals.has(state.id)) this.handleState(state); this.activateTerminal(state.id); }
+      if (state && this.workspace.terminals.has(state.id)) this.activateTerminal(state.id, state);
     } catch (error) { this.notify(message(error)); }
     finally { this.pendingProjects.delete(project.id); this.publish(); }
   }
